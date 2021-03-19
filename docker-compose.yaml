@@ -7,4 +7,25 @@ services:
       - FLASK_APP=app
     ports:
       - 8080:8080
-    entrypoint: python run.py
+    command: python run.py
+    depends_on: 
+      - postgres
+    networks:
+      app-network:
+        ipv4_address: 10.10.0.3
+  postgres:
+    image: postgres:latest
+    environment: 
+      - POSTGRES_USER=app
+      - POSTGRES_DB=app
+      - POSTGRES_PASSWORD=app
+    networks:
+      app-network:
+        ipv4_address: 10.10.0.4
+networks:
+  app-network:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.10.0.0/16
+    
