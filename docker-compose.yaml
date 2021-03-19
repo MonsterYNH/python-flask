@@ -1,0 +1,10 @@
+version: '3'
+services:
+  app:
+    image: app:latest
+    build: .
+    environment: 
+      - FLASK_APP=app
+    ports:
+      - 8080:8080
+    entrypoint: python run.py

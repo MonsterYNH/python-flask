@@ -1,0 +1,154 @@
+{% extends "appbuilder/base.html" %}
+
+{% block head_js %}
+    {{ super() }}
+    <script src="{{url_for('static',filename='js/echarts.min.js')}}"></script>
+{% endblock %}
+
+{% block content %}
+    <div style="margin:auto">
+        <select id="chart_type" onchange="on_chart_change(this.value)">
+            <option value="line">折线图</option>
+            <option value="bar">柱状图</option>
+            <option value="pie">饼图</option>
+        </select>
+    </div>
+    
+    <div id="main" style="margin:auto"></div>
+{% endblock %}
+
+{% block tail_js %}
+    {{ super() }}
+    <script>
+        var selectValue = document.getElementById("chart_type").value
+        get_data(selectValue)
+        function get_data(value) {
+            var main = document.getElementById("main")
+            while (main.hasChildNodes()) {
+                main.removeChild(main.firstChild)
+            }
+            $.ajax({
+                type: "GET",
+                url: `/datachart/datas`,
+                success: function(data) {
+                    if (!data.data) {
+                        return
+                    }
+                    for (const d of data.data) {
+                        chart(d, value)
+                    }
+                }
+            })
+        }
+
+        function renderChart(data, chartType) {
+            var option = {}
+            switch (chartType) {
+                case "line": {
+                    option = {
+                        title: {
+                            text: data.title
+                        },
+                        tooltip: {},
+                        legend: {
+                            data:[data.title]
+                        },
+                        xAxis: {
+                            data: data.tag_names,
+                        },
+                        yAxis: {},
+                        series: [{
+                            name: data.title,
+                            type: chartType,
+                            data: data.tag_values,
+                        }]
+                    }
+                }
+                break;
+                case "bar": {
+                    option = {
+                        title: {
+                            text: data.title
+                        },
+                        tooltip: {},
+                        legend: {
+                            data:[data.title]
+                        },
+                        xAxis: {
+                            data: data.tag_names,
+                        },
+                        yAxis: {},
+                        series: [{
+                            name: data.title,
+                            type: chartType,
+                            data: data.tag_values,
+                        }]
+                    }
+                }
+                break
+                case "pie": {
+                    option = {
+                        title: {
+                            text: data.title
+                        },
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{a} <br/>{b} : {c} ({d}%)'
+                        },
+                        legend: {
+                            left: 'center',
+                            top: 'bottom',
+                            data: data.tag_names,
+                        },
+                        series: [{
+                            name: data.title,
+                            type: chartType,
+                            radius: [20, 140],
+                            center: ['50%', '50%'],
+                            roseType: 'area',
+                            itemStyle: {
+                                borderRadius: 5
+                            },
+                            data: data.tag_name_values
+                        }]
+                    }
+                }
+                    
+                break;
+                default:
+                    option = {}
+            }
+            return option
+
+        }
+
+        function chart(data, chartType) {
+            var panel = document.createElement('div')
+            panel.className = "panel panel-primary"
+            var panelHead = document.createElement('div')
+            panelHead.className = "panel-heading"
+            var panelTitle = document.createElement('h4')
+            panelTitle.className = 'panel-title'
+            panelTitle.textContent = data.file_name
+            
+            panelHead.appendChild(panelTitle)
+            var panelBody = document.createElement('panel-body')
+
+            var div = document.createElement('div')
+            div.style.height='500px'
+            div.style.width = '500px'
+            div.style.margin = 'auto'
+            var chart = echarts.init(div)
+            chart.setOption(renderChart(data, chartType))
+
+            panelBody.appendChild(div)
+
+            panel.appendChild(panelHead)
+            panel.appendChild(panelBody)
+            main.appendChild(panel)
+        }
+        function on_chart_change(value) {
+            get_data(value)
+        }
+    </script>
+{% endblock %}
