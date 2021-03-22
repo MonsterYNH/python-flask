@@ -1,6 +1,7 @@
 from flask import Markup, url_for
 from flask_appbuilder import Model
-from flask_appbuilder.models.mixins import FileColumn
+from flask_appbuilder.models.mixins import FileColumn, ImageColumn
+from flask_appbuilder.filemanager import ImageManager
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -75,3 +76,122 @@ class Tag(Model):
 
     def get_title(self):
         return self.file.title
+
+class Predict(Model):
+    __tablename__ = "predicts"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    file_id = Column(Integer, ForeignKey('predict_files.id'))
+    file = relationship('PredictFile')
+    predict_value = Column(String(100))
+    predict_type_id = Column(Integer, ForeignKey('predict_types.id'))
+    predict_type = relationship('PredictType')
+    predict_record_id = Column(Integer, ForeignKey('predict_records.id'))
+    predict_record = relationship('PredictRecord')
+
+
+    def file_name(self):
+        return self.file.file_name()
+    
+    def predict_name(self):
+        return self.file.name
+
+    def predict_type_name(self):
+        if self.predict_type:
+            return self.predict_type.name
+        else:
+            return ""
+
+    def predict_image(self):
+        if self.predict_type:
+            return self.predict_type.photo_img()
+        return ""
+
+    def predict_record_name(self):
+        if self.predict_record:
+            return self.predict_record.name
+        return ""
+
+    def predict_record_file_name(self):
+        if self.predict_record:
+            return self.predict_record.file_name()
+        return ""
+
+class PredictFile(Model):
+    __tablename__ = "predict_files"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    file = Column(FileColumn, nullable=False)
+    name = Column(String(100), nullable=False, unique=True)
+    
+    def file_name(self):
+        return get_file_original_name(str(self.file))
+
+    def __repr__(self):
+        return self.name
+
+class PredictType(Model):
+    __tablename__ = 'predict_types'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(100), nullable=False)
+    source_name = Column(String(100), nullable=False, unique=True)
+
+    predict_image_id = Column(Integer, ForeignKey('predict_images.id'))
+    predict_image = relationship('PredictImage')
+
+    def photo_img(self):
+        return self.predict_image.photo_img()
+
+    def photo_img_thumbnail(self):
+        return self.predict_image.photo_img_thumbnail()
+
+    def photo_name(self):
+        return self.predict_image.name
+
+
+class PredictImage(Model):
+    __tablename__ = "predict_images"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(100), nullable=False)
+    image = Column(ImageColumn(size=(300, 300, True), thumbnail_size=(30, 30, True)))
+
+    def __repr__(self):
+        return self.name
+
+    def image_name(self):
+        return get_file_original_name(str(self.image))
+
+    def photo_img(self):
+        im = ImageManager()
+        if self.image:
+            return Markup('<a href="' + url_for('PredictImageModelView.show',pk=str(self.id)) +\
+             '" class="thumbnail"><img src="' + im.get_url(self.image) +\
+              '" alt="Photo" class="img-rounded img-responsive"></a>')
+        else:
+            return Markup('<a href="' + url_for('PredictImageModelView.show',pk=str(self.id)) +\
+             '" class="thumbnail"><img src="//:0" alt="Photo" class="img-responsive"></a>')
+
+    def photo_img_thumbnail(self):
+        im = ImageManager()
+        if self.image:
+            return Markup('<a href="' + url_for('PredictImageModelView.show',pk=str(self.id)) +\
+             '" class="thumbnail"><img src="' + im.get_url_thumbnail(self.image) +\
+              '" alt="Photo" class="img-rounded img-responsive"></a>')
+        else:
+            return Markup('<a href="' + url_for('PredictImageModelView.show',pk=str(self.id)) +\
+             '" class="thumbnail"><img src="//:0" alt="Photo" class="img-responsive"></a>')
+
+class PredictRecord(Model):
+    __tablename__ = "predict_records"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(100), nullable=False)
+    file = Column(FileColumn, nullable=False)
+
+    def __repr__(self):
+        return self.name
+
+    def file_name(self):
+        return get_file_original_name(str(self.file))

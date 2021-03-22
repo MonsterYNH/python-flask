@@ -6,9 +6,11 @@ from flask_appbuilder.api import ModelRestApi
 from sqlalchemy.sql import func
 import json
 import pandas as pd
+import numpy as np
+import keras
 
 from . import appbuilder, db
-from .models import Data, File, Tag
+from .models import Data, File, Tag, Predict, PredictFile, PredictType, PredictImage, PredictRecord
 
 class DataModelView(ModelView):
     datamodel = SQLAInterface(Data)
@@ -136,6 +138,104 @@ class FileModelView(ModelView):
             session.close() 
         return title
 
+class PredictFileModelView(ModelView):
+    datamodel = SQLAInterface(PredictFile)
+
+    label_columns = {
+        'name': '模型名',
+        'file': '模型文件',
+        'file_name': '模型文件',
+    }
+
+    add_columns = ['name', 'file']
+
+    list_columns = ['name', 'file_name']
+
+class PredictTypeModelView(ModelView):
+    datamodel = SQLAInterface(PredictType)
+
+    label_columns = {
+        'name': '类型名',
+        'source_name': '原始名',
+    }
+
+    add_columns = ['name', 'source_name', 'predict_image']
+
+    list_columns = ['name', 'source_name', 'photo_name', 'photo_img']
+
+class PredictImageModelView(ModelView):
+    datamodel = SQLAInterface(PredictImage)
+
+    label_columns = {
+        "photo_img": "图像",
+        "name": "图像名",
+        "image": "图像"
+    }
+
+    add_columns = ['name', 'image']
+
+    list_columns = ['name', 'photo_img']
+
+class PredictModelView(ModelView):
+    datamodel = SQLAInterface(Predict)
+
+    add_columns = ['file', 'predict_record']
+
+    label_columns = {
+        'file': '模型文件',
+        'file_id': '模型文件',
+        'file_name': '模型文件',
+        'predict_name': '模型名',
+        'predict_value': '预测值',
+        'predict_type_name': '预测名',
+        'predict_image': '预测图像',
+        'predict_record_name': '数据',
+        'predict_record_file_name': '数据文件',
+        'predict_record': '数据文件',
+    }
+
+    list_columns = ['predict_name', 'file_name', 'predict_record_file_name', 'predict_value', 'predict_type_name', 'predict_image']
+
+    related_views = [PredictFileModelView, PredictTypeModelView]
+
+    @action("predict", "执行预测", "确认执行预测?")
+    def predict(self, items):
+        for item in items:
+            self.predict_one(item)
+        self.update_redirect()
+        return redirect(self.get_redirect())
+
+    def predict_one(self, item):
+        # 加载模型
+        model_m = keras.models.load_model(self.appbuilder.app.config['UPLOAD_FOLDER']+item.file.file)
+        # 读取测试数据
+        x_test = np.loadtxt(self.appbuilder.app.config['UPLOAD_FOLDER']+item.predict_record.file)
+        input_shape = 240
+        predict = model_m.predict(x_test)
+        test_record = x_test.reshape(1, input_shape)
+        # 预测的活动类型，但是输出值为整数
+        prediction = np.argmax(model_m.predict(test_record), axis=1)
+
+        predict_type = db.session().query(PredictType).filter_by(source_name=str(prediction)).first()
+        if predict_type:
+            item.predict_type_id = predict_type.id
+            item.predict_value = prediction
+            self.datamodel.edit(item)
+
+
+class PredictRecordModelView(ModelView):
+    datamodel = SQLAInterface(PredictRecord)
+
+    label_columns = {
+        'name': '名称',
+        'file': '文件',
+    }
+
+    add_columns = ['name', 'file']
+
+    list_columns = ['name', 'file']
+
+
 
 """
     Application wide 404 error handler
@@ -177,4 +277,34 @@ appbuilder.add_view(
     FileModelView,
     "数据文件",
     category="数据"
+)
+
+appbuilder.add_view(
+    PredictModelView,
+    "预测结果",
+    category="预测"
+)
+
+appbuilder.add_view(
+    PredictFileModelView,
+    "预测模型",
+    category="预测"
+)
+
+appbuilder.add_view(
+    PredictTypeModelView,
+    "预测类型",
+    category="预测"
+)
+
+appbuilder.add_view(
+    PredictImageModelView,
+    "预测图像",
+    category="预测"
+)
+
+appbuilder.add_view(
+    PredictRecordModelView,
+    "数据",
+    category="预测"
 )
