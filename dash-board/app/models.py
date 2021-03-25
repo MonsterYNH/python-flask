@@ -141,13 +141,15 @@ class PredictType(Model):
     predict_image = relationship('PredictImage')
 
     def photo_img(self):
-        return self.predict_image.photo_img()
+        if self.predict_image:
+            return self.predict_image.photo_img()
+        return ""
 
     def photo_img_thumbnail(self):
-        return self.predict_image.photo_img_thumbnail()
+        return self.predict_image.photo_img_thumbnail() if self.predict_image else ""
 
     def photo_name(self):
-        return self.predict_image.name
+        return self.predict_image if self.predict_image else ""
 
 
 class PredictImage(Model):

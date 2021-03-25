@@ -8,26 +8,4 @@ services:
     ports:
       - 8080:8080
     command: python run.py
-    volumes: 
-      - /home/yangniuhong/workspace/python/python-flask/dash-board:/project/dash-board
-    depends_on: 
-      - postgres
-    networks:
-      app-network:
-        ipv4_address: 10.10.0.3
-  postgres:
-    image: postgres:latest
-    environment: 
-      - POSTGRES_USER=app
-      - POSTGRES_DB=app
-      - POSTGRES_PASSWORD=app
-    networks:
-      app-network:
-        ipv4_address: 10.10.0.4
-networks:
-  app-network:
-    driver: bridge
-    ipam:
-     config:
-       - subnet: 10.10.0.0/16
     
