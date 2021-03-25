@@ -8,7 +8,7 @@ from os.path import basename
 import json
 import pandas as pd
 import numpy as np
-import keras
+# import keras
 
 from . import appbuilder, db
 from .models import Data, File, Tag, Predict, PredictFile, PredictType, PredictImage, PredictRecord
@@ -206,13 +206,13 @@ class PredictModelView(ModelView):
         self.update_redirect()
         return redirect(self.get_redirect())
     
-    def _predict(self, item):
-        predict_record_name = item.predict_record_name()
-        predict_type = db.session().query(PredictType).filter_by(name=predict_record_name).first()
-        if predict_type:
-            item.predict_type_id = predict_type.id
-            item.predict_value = predict_type.source_name
-            self.datamodel.edit(item)
+    # def _predict(self, item):
+    #     predict_record_name = item.predict_record_name()
+    #     predict_type = db.session().query(PredictType).filter_by(name=predict_record_name).first()
+    #     if predict_type:
+    #         item.predict_type_id = predict_type.id
+    #         item.predict_value = predict_type.source_name
+    #         self.datamodel.edit(item)
 
     def predict_one(self, item):
         # 加载模型

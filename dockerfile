@@ -15,9 +15,7 @@
 # FROM gw000/keras-full
 FROM python:3.7
 
-RUN mkdir /project && pip install Flask Flask-AppBuilder pandas pillow keras
-
-RUN pip install tensorflow
+RUN mkdir /project && pip install Flask Flask-AppBuilder pandas pillow
 
 COPY . /project/
 
