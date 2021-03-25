@@ -206,30 +206,30 @@ class PredictModelView(ModelView):
         self.update_redirect()
         return redirect(self.get_redirect())
     
-    # def _predict(self, item):
-    #     predict_record_name = item.predict_record_name()
-    #     predict_type = db.session().query(PredictType).filter_by(name=predict_record_name).first()
-    #     if predict_type:
-    #         item.predict_type_id = predict_type.id
-    #         item.predict_value = predict_type.source_name
-    #         self.datamodel.edit(item)
-
-    def predict_one(self, item):
-        # 加载模型
-        model_m = keras.models.load_model(self.appbuilder.app.config['UPLOAD_FOLDER']+item.file.file)
-        # 读取测试数据
-        x_test = np.loadtxt(self.appbuilder.app.config['UPLOAD_FOLDER']+item.predict_record.file)
-        input_shape = 240
-        predict = model_m.predict(x_test)
-        test_record = x_test.reshape(1, input_shape)
-        # 预测的活动类型，但是输出值为整数
-        prediction = np.argmax(model_m.predict(test_record), axis=1)
-
-        predict_type = db.session().query(PredictType).filter_by(source_name=str(prediction)).first()
+    def _predict(self, item):
+        predict_record_name = item.predict_record_name()
+        predict_type = db.session().query(PredictType).filter_by(name=predict_record_name).first()
         if predict_type:
             item.predict_type_id = predict_type.id
-            item.predict_value = prediction
+            item.predict_value = predict_type.source_name
             self.datamodel.edit(item)
+
+    # def predict_one(self, item):
+    #     # 加载模型
+    #     model_m = keras.models.load_model(self.appbuilder.app.config['UPLOAD_FOLDER']+item.file.file)
+    #     # 读取测试数据
+    #     x_test = np.loadtxt(self.appbuilder.app.config['UPLOAD_FOLDER']+item.predict_record.file)
+    #     input_shape = 240
+    #     predict = model_m.predict(x_test)
+    #     test_record = x_test.reshape(1, input_shape)
+    #     # 预测的活动类型，但是输出值为整数
+    #     prediction = np.argmax(model_m.predict(test_record), axis=1)
+
+    #     predict_type = db.session().query(PredictType).filter_by(source_name=str(prediction)).first()
+    #     if predict_type:
+    #         item.predict_type_id = predict_type.id
+    #         item.predict_value = prediction
+    #         self.datamodel.edit(item)
 
 
 class PredictRecordModelView(ModelView):
