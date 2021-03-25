@@ -8,7 +8,7 @@ from os.path import basename
 import json
 import pandas as pd
 import numpy as np
-# import keras
+import keras
 
 from . import appbuilder, db
 from .models import Data, File, Tag, Predict, PredictFile, PredictType, PredictImage, PredictRecord
