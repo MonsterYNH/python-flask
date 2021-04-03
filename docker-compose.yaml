@@ -5,6 +5,8 @@ services:
     build: .
     environment: 
       - FLASK_APP=app
+    volumes:
+      - ./dash-board:/project/dash-board
     ports:
       - 8080:8080
     command: python run.py
